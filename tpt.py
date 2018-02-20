@@ -330,7 +330,7 @@ class Fitness:
 
 
 def generate_graph(graph, location, show=True):
-    plt.figure(figsize=(9, 9))
+
     G = nx.DiGraph()
     for i in range(len(location)):
         x = location[i][0]

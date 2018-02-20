@@ -20,6 +20,7 @@ _depo = 0
 _travel_cost = 1
 _unitary_cost = 1
 _unused_node = -9
+_penality = False
 
 
 def calculate_distance(location):
@@ -174,13 +175,11 @@ class Population:
 
 class GA:
 
-    def __init__(self, uniform_rate=0.5, mutation_rate=0.015, tournament_size=10, elitism=True, two_opt=False,
-                 three_opt=False):
+    def __init__(self, uniform_rate=0.5, mutation_rate=0.015, tournament_size=10, elitism=True, two_opt=False):
         self.uniform_rate = uniform_rate
         self.mutation_rate = mutation_rate
         self.tournament_size = tournament_size
         self.elitism = elitism
-        self.three_opt = three_opt
         self.two_opt = two_opt
         self.best = Individual(True)
 
@@ -188,10 +187,8 @@ class GA:
         new_population = Population(population.size(), initialise=False)
         if self.elitism:
             if self.best.get_fitness() <= population.beast_fitness().get_fitness():
-                if self.two_opt is True and self.three_opt is False:
+                if self.two_opt is True:
                     self.best.set_genes(self.twoOpt(population.beast_fitness().get_genes()))
-                elif self.two_opt is False and self.three_opt is True:
-                    self.best.set_genes(self.threeOpt(population.beast_fitness().get_genes()))
                 else:
                     self.best = population.beast_fitness()
         for i in range(population.size()):
@@ -281,83 +278,6 @@ class GA:
                 break
         return route
 
-    def threeOptSwap(self, route, i, j, k):
-        bestRoute = list(route)
-        best_diff = 0
-
-        a = i
-        b = j + 1
-        c = k + 2
-
-        nRoute = route[:a] + list(reversed(route[a:b])) + list(reversed(route[b:c])) + route[c:]
-        diff = _distance[route[a - 1]][route[a]] + _distance[route[b - 1]][route[b]] + _distance[route[c - 1]][route[c]]
-        diff = diff - _distance[route[a - 1]][route[b - 1]] - _distance[route[a]][route[c - 1]] - _distance[route[b]][
-            route[c]]
-        if diff > best_diff:
-            best_diff = diff
-            bestRoute = list(nRoute)
-
-        nRoute = route[:a] + route[b:c] + route[a:b] + route[c:]
-        diff = _distance[route[a - 1]][route[a]] + _distance[route[b - 1]][route[b]] + _distance[route[c - 1]][route[c]]
-        diff = diff - _distance[route[a - 1]][route[b]] - _distance[route[c - 1]][route[a]] - _distance[route[b - 1]][
-            route[c]]
-        if diff > best_diff:
-            best_diff = diff
-            bestRoute = list(nRoute)
-
-        nRoute = route[:a] + route[b:c] + list(reversed(route[a:b])) + route[c:]
-        diff = _distance[route[a - 1]][route[a]] + _distance[route[b - 1]][route[b]] + _distance[route[c - 1]][route[c]]
-        diff = diff - _distance[route[a - 1]][route[b]] - _distance[route[c - 1]][route[b - 1]] - _distance[route[a]][
-            route[c]]
-        if diff > best_diff:
-            best_diff = diff
-            bestRoute = list(nRoute)
-
-        nRoute = route[:a] + list(reversed(route[b:c])) + route[a:b] + route[c:]
-        diff = _distance[route[a - 1]][route[a]] + _distance[route[b - 1]][route[b]] + _distance[route[c - 1]][route[c]]
-        diff = diff - _distance[route[a - 1]][route[c - 1]] - _distance[route[b]][route[a]] - _distance[route[b - 1]][
-            route[c]]
-        if diff > best_diff:
-            best_diff = diff
-            bestRoute = list(nRoute)
-
-        return bestRoute, best_diff
-
-    def threeOpt(self, route):
-        xx = 0
-        while (True):
-            xx += 1
-            temp_route = list(route)
-            old_route = list(route)
-            best_diff = 0.01
-            brk = False
-            li = list(range(1, len(route) - 2))
-            random.shuffle(li)
-            for i in li:
-                lj = list(range(i, len(route) - 2))
-                random.shuffle(lj)
-                for j in lj:
-                    lk = list(range(j, len(route) - 2))
-                    random.shuffle(lk)
-                    for k in lk:
-                        new_route, new_diff = self.threeOptSwap(route, i, j, k)
-                        if new_diff > best_diff:
-                            temp_route = list(new_route)
-                            best_diff = new_diff
-                            brk = True
-                            break
-                    if brk:
-                        break
-                if brk:
-                    break
-            if not brk:
-                break
-            if best_diff > 0.01:
-                route = list(temp_route)
-            else:
-                break
-        return route
-
 
 class Fitness:
 
@@ -369,12 +289,18 @@ class Fitness:
         for i in range(len(solution)):
             cost = _distance[solution[i]][solution[(i + 1) % len(solution)]] * _travel_cost
             prof += (_nodes[solution[(i + 1) % len(solution)]][2] - cost)
-            pass
+        if _penality is True:
+            nodes = []
+            [nodes.append(x) for x in range(_n_cities) if x not in solution]
+            for i in nodes:
+                prof -= _nodes[i][2]
         return prof
 
 
 def generate_graph(graph, location, show=True):
     G = nx.DiGraph()
+    plt.figure(figsize=(9, 9))
+    plt.axis('off')
     for i in range(len(location)):
         x = location[i][0]
         y = location[i][1]
@@ -393,9 +319,7 @@ def generate_graph(graph, location, show=True):
 def solve_ga(graphic=False, printed=False):
     location = read_data(_path, _n_cities)
     population = Population(_n_cities, True)
-    #ga = GA(three_opt=True)
-    ga = GA(two_opt=True)
-    # ga = GA(twopt=False)
+    ga = GA(two_opt=False)
     start = time.clock()
 
     for i in range(_n_iteration):

@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 # HP or LP
 dataset = "HP"
 # 51, 76 or 101
-N = 76
+N = 101
 
 filename = "data/dataset-" + dataset + ".xlsx"
 df = pd.read_excel(filename, sheetname="eil" + str(N), header=None, index_col=0)
