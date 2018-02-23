@@ -22,6 +22,7 @@ _unitary_cost = 1
 _unused_node = -9
 _penality = False
 
+random.seed(7)
 
 def calculate_distance(location):
     distances = []
@@ -77,7 +78,7 @@ class Individual:
     def __repr__(self):
         s = "["
         for gene in self._genes:
-            s += " %2d " % gene
+            s += " %2d" % gene
         s += "]"
         return s
 
@@ -202,7 +203,6 @@ class GA:
 
         for i in range(new_population.size()):
             self.mutate(new_population.get_individual(i))
-            pass
         return new_population
 
     def crossover(self, indiv1, indiv2):
@@ -319,7 +319,7 @@ def generate_graph(graph, location, show=True):
 def solve_ga(graphic=False, printed=False):
     location = read_data(_path, _n_cities)
     population = Population(_n_cities, True)
-    ga = GA(two_opt=False)
+    ga = GA(two_opt=True)
     start = time.clock()
 
     for i in range(_n_iteration):
@@ -329,8 +329,25 @@ def solve_ga(graphic=False, printed=False):
         population = ga.evolve_population(population)
     end = time.clock()
     ga_time = (end - start)
-    print("Best solution with GA: %d time: %d\n" % (population.beast_fitness().get_fitness(), ga_time),
-          population.beast_fitness())
+    print("\nInstance: ")
+    print("eil" + str(_n_cities))
+    print()
+
+    print("Best Objective Value:")
+    print("%.2f" % population.beast_fitness().get_fitness())
+    print()
+
+    print("Number of Customers Visited (Depot Excluded):")
+    print(population.beast_fitness().size() - 2)
+    print()
+
+    print("Sequence of Customers Visited:")
+    print(population.beast_fitness())
+    print()
+
+    print("CPU Time (s):")
+    print("%.2f" % ga_time)
+
     if graphic is True:
         generate_graph(population.beast_fitness(), location)
 
@@ -338,5 +355,4 @@ def solve_ga(graphic=False, printed=False):
 if __name__ == "__main__":
     cities = [(index + 1) % _n_cities for index in range(0, _n_cities)]
     fitness = Fitness.calculate(cities)
-    print("Initial fitness is %d" % fitness)
-    solve_ga(graphic=True, printed=True)
+    solve_ga(graphic=True, printed=False)

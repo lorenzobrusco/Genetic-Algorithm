@@ -2,24 +2,20 @@ import numpy as np
 import math
 import time
 import random
-import itertools
-import queue
 import pandas as pd
 from IPython.display import display, Markdown
 import networkx as nx
 import matplotlib.pyplot as plt
-
+random.seed(7)
 # HP or LP
 dataset = "HP"
-# 51, 76 or 101
-N = 101
+# 26, 51, 76 or 101
+N = 51
 
 filename = "data/dataset-" + dataset + ".xlsx"
-df = pd.read_excel(filename, sheetname="eil" + str(N), header=None, index_col=0)
+df = pd.read_excel(filename, sheet_name="eil" + str(N), header=None, index_col=0)
 
 df.columns = ['x', 'y', 'prof']
-
-display(df[0:10])
 
 distances = [-1]
 prof = [-1]
