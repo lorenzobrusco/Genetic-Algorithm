@@ -22,13 +22,14 @@ _unitary_cost = 1
 _unused_node = -9
 _penality = False
 _maximum_dinstance_from_depot = 0
-_minimum_dinstance_from_depot = 0
+_second_minimum_dinstance_from_depot=0
 random.seed(7)
 
 def calculate_distance(location):
     distances = []
     global _maximum_dinstance_from_depot
-    global _minimum_dinstance_from_depot
+    #_minimum_dinstance_from_depot =0
+    global _second_minimum_dinstance_from_depot
     assign = True
 
     for i in range(len(location)):
@@ -36,17 +37,22 @@ def calculate_distance(location):
             x_distance = abs(location[i][0] - location[j][0])
             y_distance = abs(location[i][1] - location[j][1])
             distance = math.sqrt((x_distance * x_distance) + (y_distance * y_distance))
-            if(i == 0 and j !=0):
+            if(distance > 0):
 
                 if assign:
-                    _minimum_dinstance_from_depot = distance
+                    _minimum_dinstance_from_depot =\
                     _maximum_dinstance_from_depot = distance
                     assign = False
+                else:
 
-                if(distance < _minimum_dinstance_from_depot):
-                    _minimum_dinstance_from_depot = distance
-                if(distance > _maximum_dinstance_from_depot):
-                    _maximum_dinstance_from_depot = distance
+                    if(distance < _minimum_dinstance_from_depot):
+                        _second_minimum_dinstance_from_depot =\
+                        _minimum_dinstance_from_depot
+
+                        _minimum_dinstance_from_depot = distance
+
+                    if(distance > _maximum_dinstance_from_depot):
+                        _maximum_dinstance_from_depot = distance
 
             distances.append(distance)
     distances = np.reshape(distances, (len(location), len(location)))
@@ -61,11 +67,11 @@ T. Dewilde, D. Cattrysse , S. Coene , F.C.R. Spieksma, P. Vansteenwegen
 '''
 
 def calculate_profits(location):
-    #random_integers [low,high]  we need (low,high]
-    size = len(location)
-    for i in range(size):
+    #random_integers [low,high]  we need (low,high] low excluded
+    
+    for i in range(_n_cities):
         profit =\
-        np.random.random_integers(_minimum_dinstance_from_depot,(size/2)*_maximum_dinstance_from_depot)
+        np.random.random_integers(_second_minimum_dinstance_from_depot,(_n_cities/2)*_maximum_dinstance_from_depot)
         location[i][2] = profit
         #print ("Node %d  profit %f " % (i,profit))
 

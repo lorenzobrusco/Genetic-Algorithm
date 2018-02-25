@@ -20,19 +20,47 @@ df.columns = ['x', 'y', 'prof']
 distances = [-1]
 prof = [-1]
 
+_maximum_dinstance_from_depot = 0
+_second_minimum_dinstance_from_depot = 0
+
+def calculate_profits():
+    #random_integers [low,high]  we need (low,high]_
+        profit =\
+        np.random.random_integers(_second_minimum_dinstance_from_depot,(N/2)*_maximum_dinstance_from_depot)
+        return profit
+
+
+init = True
 for lab, row in df.iterrows():
     tempDist = [-1]
-    prof.append(row['prof'])
+    prof=[]#.append(row['prof'])
     for lab2, row2 in df.iterrows():
         dist = math.sqrt(math.pow(row['x'] - row2['x'], 2) + math.pow(row['y'] - row2['y'], 2))
+        if dist > 0:
+            if init :
+                _minimum_dinstance_from_depot = _maximum_dinstance_from_depot = dist
+                init = False
+            else:
+                if dist < _minimum_dinstance_from_depot:
+                    _second_minimum_dinstance_from_depot =\
+                    _minimum_dinstance_from_depot
+                    _minimum_dinstance_from_depot = dist
+
+                if dist > _maximum_dinstance_from_depot:
+                    _maximum_dinstance_from_depot = dist
+
         tempDist.append(dist)
     distances.append(tempDist)
 
 # dff holds the main data as given from the xls
 # Started the indices from 1
-dff = [[0, 0, 0]]
+dff = [(0, 0, 0)]
 for lab, row in df.iterrows():
-    dff.append([row['x'], row['y'], row['prof']])
+    prof.append(calculate_profits())
+    dff.append((row['x'], row['y'], prof[int(lab -1)]))
+
+
+
 
 
 def calculateObj(route):
@@ -197,7 +225,7 @@ def initialization():
                     if lab not in route:
                         new_route = route[:k + 1] + [lab] + route[k + 1:]
                         diff_obj = (distances[route[k]][lab] + distances[lab][route[k + 1]] - distances[route[k]][
-                            route[k + 1]]) / prof[lab]
+                            route[k + 1]]) / prof[lab-1]
                         if diff_obj < min_obj:
                             temp_route = list(new_route)
                             min_obj = diff_obj
