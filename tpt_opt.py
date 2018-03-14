@@ -27,11 +27,14 @@ _maximum_dinstance_from_depot = 0
 _minimum_dinstance_from_depot = 0
 random.seed(7)
 stop_event = Event()
+location = None
+population = None
+ga = None
 
 def calculate_distance(location):
     distances = []
     global _maximum_dinstance_from_depot
-    global _minimum_dinstance_from_depot_
+    global _minimum_dinstance_from_depot
     assign = True
 
     for i in range(len(location)):
@@ -352,7 +355,10 @@ def generate_graph(graph, location, show=True):
     if show is True:
         plt.show()
 
-def action(printed=False,ga = None,population = None):
+def action(printed=False):
+    global location
+    global population
+    global ga
 
     print ("Algorithm started")
     for i in range(_n_iteration):
@@ -365,15 +371,20 @@ def action(printed=False,ga = None,population = None):
     stop_event.set()
 
 def solve_ga(graphic=False, printed=False):
+    global location
+    global population
+    global ga
+
     location = read_data(_path, _n_cities)
     population = Population(_n_cities, True)
     ga = GA(two_opt=True)
 
     start = time.clock()
 
-    action_thread = Thread (target=action, args=(printed,ga,population))
+    action_thread = Thread (target=action, args=(printed,))
     action_thread.start()
     action_thread.join(timeout=int(sys.argv[2]))
+    stop_event.set()
     end = time.clock()
     ga_time = (end - start)
     print("\nInstance: ")
@@ -402,4 +413,4 @@ def solve_ga(graphic=False, printed=False):
 if __name__ == "__main__":
     cities = [(index + 1) % _n_cities for index in range(0, _n_cities)]
     fitness = Fitness.calculate(cities)
-    solve_ga(graphic=True, printed=False)
+    solve_ga(graphic=True, printed=True)
