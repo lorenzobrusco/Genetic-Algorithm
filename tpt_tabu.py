@@ -25,12 +25,12 @@ distances = [-1]
 prof = [-1]
 
 _maximum_dinstance_from_depot = 0
-_second_minimum_dinstance_from_depot = 0
+_minimum_dinstance_from_depot = 0
 
 def calculate_profits():
     #random_integers [low,high]  we need (low,high]
         profit =\
-        np.random.random_integers(_second_minimum_dinstance_from_depot,(N/2)*_maximum_dinstance_from_depot)
+        np.random.random_integers(_minimum_dinstance_from_depot +1,(N/2)*_maximum_dinstance_from_depot)
         return profit
 
 
@@ -46,8 +46,6 @@ for lab, row in df.iterrows():
                 init = False
             else:
                 if dist < _minimum_dinstance_from_depot:
-                    _second_minimum_dinstance_from_depot =\
-                    _minimum_dinstance_from_depot
                     _minimum_dinstance_from_depot = dist
 
                 if dist > _maximum_dinstance_from_depot:

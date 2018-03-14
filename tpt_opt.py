@@ -368,7 +368,7 @@ def solve_ga(graphic=False, printed=False):
     location = read_data(_path, _n_cities)
     population = Population(_n_cities, True)
     ga = GA(two_opt=True)
- 
+
     start = time.clock()
 
     action_thread = Thread (target=action, args=(printed,ga,population))
