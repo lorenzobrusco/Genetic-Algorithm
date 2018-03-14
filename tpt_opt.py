@@ -26,6 +26,7 @@ _penality = False
 _maximum_dinstance_from_depot = 0
 _minimum_dinstance_from_depot = 0
 random.seed(7)
+stop_event = Event()
 
 def calculate_distance(location):
     distances = []
@@ -351,18 +352,28 @@ def generate_graph(graph, location, show=True):
     if show is True:
         plt.show()
 
+def action(printed=False,ga = None,population = None):
+
+    print ("Algorithm started")
+    for i in range(_n_iteration):
+        if printed is True:
+            print("Iteration %d: generate new population,  fitness %d\n" % (i, population.beast_fitness().get_fitness()))
+        population = ga.evolve_population(population)
+        if stop_event.is_set():
+            print ("Timeout reached")
+            break
+    stop_event.set()
 
 def solve_ga(graphic=False, printed=False):
     location = read_data(_path, _n_cities)
     population = Population(_n_cities, True)
     ga = GA(two_opt=True)
+ 
     start = time.clock()
 
-    for i in range(_n_iteration):
-        if printed is True:
-            print(
-                "Iteration %d: generate new population,  fitness %d\n" % (i, population.beast_fitness().get_fitness()))
-        population = ga.evolve_population(population)
+    action_thread = Thread (target=action, args=(printed,ga,population))
+    action_thread.start()
+    action_thread.join(timeout=int(sys.argv[2]))
     end = time.clock()
     ga_time = (end - start)
     print("\nInstance: ")

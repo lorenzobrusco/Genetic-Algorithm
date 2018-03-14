@@ -1,16 +1,20 @@
 import numpy as np
 import math
 import time
+import sys
 import random
 import pandas as pd
 from IPython.display import display, Markdown
 import networkx as nx
 import matplotlib.pyplot as plt
+from threading import Thread, Event
+import time
 random.seed(7)
 # HP or LP
 dataset = "HP"
 # 26, 51, 76 or 101
 N = 51
+stop_event = Event()
 
 filename = "data/dataset-" + dataset + ".xlsx"
 df = pd.read_excel(filename, sheet_name="eil" + str(N), header=None, index_col=0)
@@ -353,11 +357,115 @@ def calculateDist(x1, y1, x2, y2):
     return math.sqrt(math.pow(x1 - x2, 2) + math.pow(y1 - y2, 2))
 
 
+def action(route = None,insCandidatesAll= None,tabuList= None,solutionIndex= None,bestRoute= None,bestObj= None):
+
+    
+    # Start tabu search
+    for i in range(ITER):
+        # Choose one insertion partition ramdompy
+        insCandidates = list(insCandidatesAll[random.randint(0, len(insCandidatesAll) - 1)])
+    
+        # Determine deletion candidates
+        if len(route) < 3:
+            delCandidates = []
+        else:
+            delCandidates = deletionCandidates(route)
+    
+        candidateRoute = []
+        tabuAddition = []
+    
+        # Find best insertion candidate from the selected partition
+        bestInsCandidate = findBestInsertionCandidate(route, tabuList, insCandidates)
+    
+        # Calculate the gain of inserting the insertion candidate to the route
+        insertedRoute = list(route)
+        profitSum = 0
+        distSum = 0
+        random.shuffle(bestInsCandidate)
+        for c in bestInsCandidate:
+            if c not in insertedRoute and c not in tabuList:
+                profitSum = profitSum + dff[c][2]
+                minDist = 99999999
+                temp_route = list(insertedRoute)
+                for j in range(len(insertedRoute) - 1):
+                    new_route = insertedRoute[:j + 1] + [c] + insertedRoute[j + 1:]
+                    diffDist = distances[insertedRoute[j]][c] + distances[c][insertedRoute[j + 1]] - \
+                               distances[insertedRoute[j]][insertedRoute[j + 1]]
+                    if diffDist < minDist:
+                        temp_route = list(new_route)
+                        minDist = diffDist
+                insertedRoute = list(temp_route)
+                distSum = distSum + minDist
+        if distSum == 0:
+            distSum = 99999999
+        insertedObj = profitSum / distSum
+    
+        # Choose the best deletion candidate from the selected ones, then calculate its gain
+        deletedRoute = list(route)
+        maxDeletedObj = -99999999
+        for dC in delCandidates:
+            tempRoute = list(route)
+            profitSum = 0
+            distSum = 0
+            for c in dC:
+                if c in tempRoute:
+                    cPrev = tempRoute[tempRoute.index(c) - 1]
+                    cNext = tempRoute[tempRoute.index(c) + 1]
+    
+                    profitSum = profitSum + dff[c][2]
+                    distSum = distances[cPrev][c] + distances[c][cNext] - distances[cPrev][cNext]
+                    tempRoute.remove(c)
+            if profitSum != 0 and distSum / profitSum > maxDeletedObj:
+                maxDeletedObj = distSum / profitSum
+                deletedRoute = list(tempRoute)
+                tabuAddition = list(dC)
+        deletedObj = maxDeletedObj
+    
+        # Compare the insertion and deletion gains, and apply the better one
+        if insertedObj > deletedObj:
+            candidateRoute = list(insertedRoute)
+            chosen = ['I', len(insertedRoute) - len(route)]
+        else:
+            candidateRoute = list(deletedRoute)
+            chosen = ['D', len(route) - len(deletedRoute)]
+    
+        # Update the tabu list
+        for key, value in list(tabuList.items()):
+            tabuList[key] = tabuList[key] - 1
+            if tabuList[key] == 0:
+                del (tabuList[key])
+    
+        # If deletion action is performed then add the chosen deletion candidates to the tabu list.
+        if chosen[0] == 'D':
+            for tA in tabuAddition:
+                if tA in route:
+                    tabuList[tA] = random.randint(5, 25)
+    
+        route = list(candidateRoute)
+    
+        # Improve the route
+        if i % 5 == 0:
+            route = twoOpt(route)[0]
+    
+        # Best solution update
+        if calculateObj(route) > bestObj:
+            solutionIndex.append(i)
+            route = threeOpt(route)
+            bestRoute = list(route)
+            bestObj = calculateObj(route)
+    
+        # Shuffle to Reset
+        if i - solutionIndex[-1] >= 1000:
+            tabuList.clear()
+            tempRoute = bestRoute[1:-1]
+            random.shuffle(tempRoute)
+            tempRoute = [1] + tempRoute + [1]
+            route = list(tempRoute)
+            solutionIndex.append(i)
+    
+
 # Iteration Count
 ITER = 1000
-
-# Start the timer
-t1 = time.clock()
 
 # Create the initial route
 route = initialization()
@@ -370,109 +478,12 @@ solutionIndex = [0]
 bestRoute = list(route)
 bestObj = calculateObj(bestRoute)
 
-# Start tabu search
-for i in range(ITER):
-    # Choose one insertion partition ramdompy
-    insCandidates = list(insCandidatesAll[random.randint(0, len(insCandidatesAll) - 1)])
 
-    # Determine deletion candidates
-    if len(route) < 3:
-        delCandidates = []
-    else:
-        delCandidates = deletionCandidates(route)
-
-    candidateRoute = []
-    tabuAddition = []
-
-    # Find best insertion candidate from the selected partition
-    bestInsCandidate = findBestInsertionCandidate(route, tabuList, insCandidates)
-
-    # Calculate the gain of inserting the insertion candidate to the route
-    insertedRoute = list(route)
-    profitSum = 0
-    distSum = 0
-    random.shuffle(bestInsCandidate)
-    for c in bestInsCandidate:
-        if c not in insertedRoute and c not in tabuList:
-            profitSum = profitSum + dff[c][2]
-            minDist = 99999999
-            temp_route = list(insertedRoute)
-            for j in range(len(insertedRoute) - 1):
-                new_route = insertedRoute[:j + 1] + [c] + insertedRoute[j + 1:]
-                diffDist = distances[insertedRoute[j]][c] + distances[c][insertedRoute[j + 1]] - \
-                           distances[insertedRoute[j]][insertedRoute[j + 1]]
-                if diffDist < minDist:
-                    temp_route = list(new_route)
-                    minDist = diffDist
-            insertedRoute = list(temp_route)
-            distSum = distSum + minDist
-    if distSum == 0:
-        distSum = 99999999
-    insertedObj = profitSum / distSum
-
-    # Choose the best deletion candidate from the selected ones, then calculate its gain
-    deletedRoute = list(route)
-    maxDeletedObj = -99999999
-    for dC in delCandidates:
-        tempRoute = list(route)
-        profitSum = 0
-        distSum = 0
-        for c in dC:
-            if c in tempRoute:
-                cPrev = tempRoute[tempRoute.index(c) - 1]
-                cNext = tempRoute[tempRoute.index(c) + 1]
-
-                profitSum = profitSum + dff[c][2]
-                distSum = distances[cPrev][c] + distances[c][cNext] - distances[cPrev][cNext]
-                tempRoute.remove(c)
-        if profitSum != 0 and distSum / profitSum > maxDeletedObj:
-            maxDeletedObj = distSum / profitSum
-            deletedRoute = list(tempRoute)
-            tabuAddition = list(dC)
-    deletedObj = maxDeletedObj
-
-    # Compare the insertion and deletion gains, and apply the better one
-    if insertedObj > deletedObj:
-        candidateRoute = list(insertedRoute)
-        chosen = ['I', len(insertedRoute) - len(route)]
-    else:
-        candidateRoute = list(deletedRoute)
-        chosen = ['D', len(route) - len(deletedRoute)]
-
-    # Update the tabu list
-    for key, value in list(tabuList.items()):
-        tabuList[key] = tabuList[key] - 1
-        if tabuList[key] == 0:
-            del (tabuList[key])
-
-    # If deletion action is performed then add the chosen deletion candidates to the tabu list.
-    if chosen[0] == 'D':
-        for tA in tabuAddition:
-            if tA in route:
-                tabuList[tA] = random.randint(5, 25)
-
-    route = list(candidateRoute)
-
-    # Improve the route
-    if i % 5 == 0:
-        route = twoOpt(route)[0]
-
-    # Best solution update
-    if calculateObj(route) > bestObj:
-        solutionIndex.append(i)
-        route = threeOpt(route)
-        bestRoute = list(route)
-        bestObj = calculateObj(route)
-
-    # Shuffle to Reset
-    if i - solutionIndex[-1] >= 1000:
-        tabuList.clear()
-        tempRoute = bestRoute[1:-1]
-        random.shuffle(tempRoute)
-        tempRoute = [1] + tempRoute + [1]
-        route = list(tempRoute)
-        solutionIndex.append(i)
-
+# Start the timer
+t1 = time.clock()
+action_thread = Thread(target=action,args=(route,insCandidatesAll,tabuList,solutionIndex,bestRoute,bestObj))
+action_thread.start()
+action_thread.join(timeout=int(sys.argv[1]))
 # Stop  the timer
 t2 = time.clock()
 
