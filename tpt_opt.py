@@ -413,4 +413,4 @@ def solve_ga(graphic=False, printed=False):
 if __name__ == "__main__":
     cities = [(index + 1) % _n_cities for index in range(0, _n_cities)]
     fitness = Fitness.calculate(cities)
-    solve_ga(graphic=True, printed=True)
+    solve_ga(graphic=True, printed=False)
