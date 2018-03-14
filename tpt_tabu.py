@@ -24,7 +24,7 @@ _maximum_dinstance_from_depot = 0
 _second_minimum_dinstance_from_depot = 0
 
 def calculate_profits():
-    #random_integers [low,high]  we need (low,high]_
+    #random_integers [low,high]  we need (low,high]
         profit =\
         np.random.random_integers(_second_minimum_dinstance_from_depot,(N/2)*_maximum_dinstance_from_depot)
         return profit

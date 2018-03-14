@@ -9,6 +9,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from openpyxl import load_workbook
 from openpyxl.compat import range
+from threading import Thread, Event
+import time
 
 if len(sys.argv) < 2:
     _n_cities = 51
@@ -22,14 +24,13 @@ _unitary_cost = 1
 _unused_node = -9
 _penality = False
 _maximum_dinstance_from_depot = 0
-_second_minimum_dinstance_from_depot=0
+_minimum_dinstance_from_depot = 0
 random.seed(7)
 
 def calculate_distance(location):
     distances = []
     global _maximum_dinstance_from_depot
-    #_minimum_dinstance_from_depot =0
-    global _second_minimum_dinstance_from_depot
+    global _minimum_dinstance_from_depot_
     assign = True
 
     for i in range(len(location)):
@@ -46,8 +47,6 @@ def calculate_distance(location):
                 else:
 
                     if(distance < _minimum_dinstance_from_depot):
-                        _second_minimum_dinstance_from_depot =\
-                        _minimum_dinstance_from_depot
 
                         _minimum_dinstance_from_depot = distance
 
@@ -68,10 +67,10 @@ T. Dewilde, D. Cattrysse , S. Coene , F.C.R. Spieksma, P. Vansteenwegen
 
 def calculate_profits(location):
     #random_integers [low,high]  we need (low,high] low excluded
-    
+
     for i in range(_n_cities):
         profit =\
-        np.random.random_integers(_second_minimum_dinstance_from_depot,(_n_cities/2)*_maximum_dinstance_from_depot)
+        np.random.random_integers((_minimum_dinstance_from_depot +1 ),(_n_cities/2)*_maximum_dinstance_from_depot)
         location[i][2] = profit
         #print ("Node %d  profit %f " % (i,profit))
 
