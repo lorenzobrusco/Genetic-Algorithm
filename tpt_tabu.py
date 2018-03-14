@@ -461,7 +461,7 @@ def action(route = None,insCandidatesAll= None,tabuList= None,solutionIndex= Non
             route = list(tempRoute)
             solutionIndex.append(i)
 
-        if stop_event.is_set :
+        if stop_event.is_set():
             break
 # Iteration Count
 ITER = 1000
