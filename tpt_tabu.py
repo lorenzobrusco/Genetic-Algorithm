@@ -357,24 +357,24 @@ def calculateDist(x1, y1, x2, y2):
 
 def action(route = None,insCandidatesAll= None,tabuList= None,solutionIndex= None,bestRoute= None,bestObj= None):
 
-    
+
     # Start tabu search
     for i in range(ITER):
         # Choose one insertion partition ramdompy
         insCandidates = list(insCandidatesAll[random.randint(0, len(insCandidatesAll) - 1)])
-    
+
         # Determine deletion candidates
         if len(route) < 3:
             delCandidates = []
         else:
             delCandidates = deletionCandidates(route)
-    
+
         candidateRoute = []
         tabuAddition = []
-    
+
         # Find best insertion candidate from the selected partition
         bestInsCandidate = findBestInsertionCandidate(route, tabuList, insCandidates)
-    
+
         # Calculate the gain of inserting the insertion candidate to the route
         insertedRoute = list(route)
         profitSum = 0
@@ -397,7 +397,7 @@ def action(route = None,insCandidatesAll= None,tabuList= None,solutionIndex= Non
         if distSum == 0:
             distSum = 99999999
         insertedObj = profitSum / distSum
-    
+
         # Choose the best deletion candidate from the selected ones, then calculate its gain
         deletedRoute = list(route)
         maxDeletedObj = -99999999
@@ -409,7 +409,7 @@ def action(route = None,insCandidatesAll= None,tabuList= None,solutionIndex= Non
                 if c in tempRoute:
                     cPrev = tempRoute[tempRoute.index(c) - 1]
                     cNext = tempRoute[tempRoute.index(c) + 1]
-    
+
                     profitSum = profitSum + dff[c][2]
                     distSum = distances[cPrev][c] + distances[c][cNext] - distances[cPrev][cNext]
                     tempRoute.remove(c)
@@ -418,7 +418,7 @@ def action(route = None,insCandidatesAll= None,tabuList= None,solutionIndex= Non
                 deletedRoute = list(tempRoute)
                 tabuAddition = list(dC)
         deletedObj = maxDeletedObj
-    
+
         # Compare the insertion and deletion gains, and apply the better one
         if insertedObj > deletedObj:
             candidateRoute = list(insertedRoute)
@@ -426,32 +426,32 @@ def action(route = None,insCandidatesAll= None,tabuList= None,solutionIndex= Non
         else:
             candidateRoute = list(deletedRoute)
             chosen = ['D', len(route) - len(deletedRoute)]
-    
+
         # Update the tabu list
         for key, value in list(tabuList.items()):
             tabuList[key] = tabuList[key] - 1
             if tabuList[key] == 0:
                 del (tabuList[key])
-    
+
         # If deletion action is performed then add the chosen deletion candidates to the tabu list.
         if chosen[0] == 'D':
             for tA in tabuAddition:
                 if tA in route:
                     tabuList[tA] = random.randint(5, 25)
-    
+
         route = list(candidateRoute)
-    
+
         # Improve the route
         if i % 5 == 0:
             route = twoOpt(route)[0]
-    
+
         # Best solution update
         if calculateObj(route) > bestObj:
             solutionIndex.append(i)
             route = threeOpt(route)
             bestRoute = list(route)
             bestObj = calculateObj(route)
-    
+
         # Shuffle to Reset
         if i - solutionIndex[-1] >= 1000:
             tabuList.clear()
@@ -460,8 +460,9 @@ def action(route = None,insCandidatesAll= None,tabuList= None,solutionIndex= Non
             tempRoute = [1] + tempRoute + [1]
             route = list(tempRoute)
             solutionIndex.append(i)
-    
 
+        if stop_event.is_set :
+            break
 # Iteration Count
 ITER = 1000
 
@@ -482,6 +483,7 @@ t1 = time.clock()
 action_thread = Thread(target=action,args=(route,insCandidatesAll,tabuList,solutionIndex,bestRoute,bestObj))
 action_thread.start()
 action_thread.join(timeout=int(sys.argv[1]))
+stop_event.set()
 # Stop  the timer
 t2 = time.clock()
 
