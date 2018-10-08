@@ -190,7 +190,7 @@ if __name__ == "__main__":
                 current_seed = random.randint(1,2**32)
 
             nodes = AssignProfits(nodes,current_seed)
-            #GA.main(current_file,nodes)
+            GA.main(current_file,nodes)
             TABU.main(current_file,nodes)
 
     sys.exit()
