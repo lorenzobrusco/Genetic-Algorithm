@@ -564,38 +564,53 @@ def init_args(args):
     return
 
 
+def writeToFile(value,stdout = False):
+    global logfile
+    global iteration
 
-def solve_ga(graphic=False, printed=True):
-    global location
-    global population
-    global ga
-    global _timeout
+    if stdout:
+        print (value)
 
-    population = Population(_n_cities, True)
-    ga = GA(two_opt=False)
-    start = time.clock()
-    action(printed)
-    #action_thread = Thread (target=action, args=(printed,))
-    #action_thread.start()
-    #action_thread.join(timeout=_timeout)
+    with open('./results.txt','a') as f:
+        f.write(value+'\n')
+        f.close()
+
+
+def main(_file,nodes):
+    init(nodes)
+
+    route = initialization()
+    # Determine all possible insertion partitions
+    insCandidatesAll = insertionCandidates()
+    tabuList = {}
+    solutionIndex = [0]
+
+    bestRoute = list(route)
+    bestObj = calculateObj(bestRoute)
+
+
+    # Start the timer
+    t1 = time.clock()
+    action_thread = Thread(target=action,args=(route,insCandidatesAll,tabuList,solutionIndex,bestRoute,bestObj))
+    action_thread.start()
+    action_thread.join(timeout=15)
     stop_event.set()
-    end = time.clock()
-    ga_time = (end - start)
+    # Stop  the timer
+    t2 = time.clock()
+
+
+    timePassed = (t2 - t1)
+
+    writeToFile("TABU\n")
     writeToFile("Best Objective Value: %.2f\n" % \
-                population.beast_fitness().get_fitness(),True)
+                calculateObj(bestRoute),True)
     writeToFile("Number of Customers Visited (Depot Excluded): %d \n" \
-            % (population.beast_fitness().size() - 2),True)
+            % (len(bestRoute) - 2),True)
     writeToFile("Sequence of Customers Visited:\n %s\n" % \
-                population.beast_fitness(),True)
-    writeToFile("CPU Time (s): %.2f\n" %ga_time,True)
+                bestRoute,True)
+    writeToFile("CPU Time (s): %.2f\n" %timePassed,True)
+    return
 
-    #if action_thread.isAlive():
-    #    action_thread.join()
-
-    #del(action_thread)
-
-    if graphic is True:
-        generate_graph(population.beast_fitness(), _nodes)
 
 
 if __name__ == "__main__":

@@ -492,13 +492,13 @@ def solve_ga(graphic=False, printed=True):
     population = Population(_n_cities, True)
     ga = GA(two_opt=False)
     start = time.clock()
-    action(printed)
-    #action_thread = Thread (target=action, args=(printed,))
-    #action_thread.start()
-    #action_thread.join(timeout=_timeout)
+    action_thread = Thread (target=action, args=(printed,))
+    action_thread.start()
+    action_thread.join(timeout=_timeout)
     stop_event.set()
     end = time.clock()
     ga_time = (end - start)
+    writeToFile("GA\n")
     writeToFile("Best Objective Value: %.2f\n" % \
                 population.beast_fitness().get_fitness(),True)
     writeToFile("Number of Customers Visited (Depot Excluded): %d \n" \
@@ -507,74 +507,37 @@ def solve_ga(graphic=False, printed=True):
                 population.beast_fitness(),True)
     writeToFile("CPU Time (s): %.2f\n" %ga_time,True)
 
-    #if action_thread.isAlive():
-    #    action_thread.join()
+    if action_thread.isAlive():
+        action_thread.join()
 
-    #del(action_thread)
+    del(action_thread)
 
     if graphic is True:
         generate_graph(population.beast_fitness(), _nodes)
-        
-        
+
+
 def writeToFile(value,stdout = False):
     global logfile
     global iteration
 
-    if logfile == None:
-        initLogFile()
-
     if stdout:
         print (value)
 
-    logfile.write(value+'\n')
-
-def initLogFile():
-    global logfile
-    logfile = open('./results.txt','w')
-
-
+    with open('./results.txt','a') as f:
+        f.write(value+'\n')
+        f.close()
 
 
 def main(_file,nodes):
 
     global stop_event
     stop_event = Event()
-    #final_string = '-' * output_size + '\n'
-    #string = "Instance : %s" %(_file,)
-    #str_len = len(string)
-    #string += ' ' * (width - str_len)
-    #string += "Seed : [ %10d ]\n" %(seed,)
-    #final_string += string
-    #string =""
-    #start = time.clock()
-    #_n_cities = load_data(_file)
-    #end = time.clock()
-    #final_string += '-' * output_size + '\n'
-    #string +="Data loaded in : %.2f "  % (end - start,)
-    #string += ' ' * (width - len(string))
-    #start = time.clock()
-    #calculate_profits(_nodes,_n_cities)
-    #end = time.clock()
-    #string += "Profits calculated : %.2f\n" % (end -start,)
-    #final_string += string
-    #string =""
-    #start = time.clock()
     global _nodes
     _nodes = nodes
     global _n_cities
     _n_cities = len(_nodes)
     cities = [(index + 1) % _n_cities for index in range(0, _n_cities)]
-   # end = time.clock()
-   # string ="Instantiation : %.2f" % (end-start)
-   # string += ' ' * (width - len(string))
-   # final_string += string
     fitness = Fitness.calculate(cities)
-   # string = "Initial fitness: %d\n" % (fitness,)
-   # final_string += string
-   # print (final_string)
-   # del(string)
-   # del(start)
-   # del(end)
     solve_ga(graphic=False, printed=False)
     stop_event.clear()
     if logfile !=None:
