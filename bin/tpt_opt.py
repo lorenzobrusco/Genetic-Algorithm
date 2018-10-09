@@ -492,9 +492,10 @@ def solve_ga(graphic=False, printed=True):
     population = Population(_n_cities, True)
     ga = GA(two_opt=False)
     start = time.clock()
-    action_thread = Thread (target=action, args=(printed,))
-    action_thread.start()
-    action_thread.join(timeout=_timeout)
+    action(printed)
+    #action_thread = Thread (target=action, args=(printed,))
+    #action_thread.start()
+    #action_thread.join(timeout=_timeout)
     stop_event.set()
     end = time.clock()
     ga_time = (end - start)
@@ -506,15 +507,15 @@ def solve_ga(graphic=False, printed=True):
                 population.beast_fitness(),True)
     writeToFile("CPU Time (s): %.2f\n" %ga_time,True)
 
-    if action_thread.isAlive():
-        action_thread.join()
+    #if action_thread.isAlive():
+    #    action_thread.join()
 
-    del(action_thread)
+    #del(action_thread)
 
     if graphic is True:
         generate_graph(population.beast_fitness(), _nodes)
-
-
+        
+        
 def writeToFile(value,stdout = False):
     global logfile
     global iteration
