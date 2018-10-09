@@ -565,49 +565,37 @@ def init_args(args):
 
 
 
-def main(_file,nodes):
-    init(nodes)
+def solve_ga(graphic=False, printed=True):
+    global location
+    global population
+    global ga
+    global _timeout
 
-    route = initialization()
-    # Determine all possible insertion partitions
-    insCandidatesAll = insertionCandidates()
-    tabuList = {}
-    solutionIndex = [0]
-
-    bestRoute = list(route)
-    bestObj = calculateObj(bestRoute)
-
-
-    # Start the timer
-    t1 = time.clock()
-    action_thread = Thread(target=action,args=(route,insCandidatesAll,tabuList,solutionIndex,bestRoute,bestObj))
-    action_thread.start()
-    action_thread.join(timeout=15)
+    population = Population(_n_cities, True)
+    ga = GA(two_opt=False)
+    start = time.clock()
+    action(printed)
+    #action_thread = Thread (target=action, args=(printed,))
+    #action_thread.start()
+    #action_thread.join(timeout=_timeout)
     stop_event.set()
-    # Stop  the timer
-    t2 = time.clock()
+    end = time.clock()
+    ga_time = (end - start)
+    writeToFile("Best Objective Value: %.2f\n" % \
+                population.beast_fitness().get_fitness(),True)
+    writeToFile("Number of Customers Visited (Depot Excluded): %d \n" \
+            % (population.beast_fitness().size() - 2),True)
+    writeToFile("Sequence of Customers Visited:\n %s\n" % \
+                population.beast_fitness(),True)
+    writeToFile("CPU Time (s): %.2f\n" %ga_time,True)
 
-    print("Instance: ")
-    print("%s" % _file)
-    print()
+    #if action_thread.isAlive():
+    #    action_thread.join()
 
-    print("Best Objective Value:")
-    print("%.2f" % calculateObj(bestRoute))
-    print()
+    #del(action_thread)
 
-    print("Number of Customers Visited (Depot Excluded):")
-    print(len(bestRoute) - 2)
-    print()
-
-    print("Sequence of Customers Visited:")
-    print(bestRoute)
-    print()
-
-    print("CPU Time (s):")
-    timePassed = (t2 - t1)
-    print("%.2f" % timePassed)
-    return
-
+    if graphic is True:
+        generate_graph(population.beast_fitness(), _nodes)
 
 
 if __name__ == "__main__":
